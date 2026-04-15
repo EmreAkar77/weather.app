@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HavaDurumu</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --sky-start: #0f2b5b;
+      --sky-end:   #1a6fa8;
+      --card-glass: rgba(255,255,255,0.10);
+      --card-border: rgba(255,255,255,0.18);
+      --accent: #ffd166;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(160deg, var(--sky-start) 0%, var(--sky-end) 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    h1, h2, h3, .display-temp {
+      font-family: 'Syne', sans-serif;
+    }
+
+    .navbar-brand span {
+      color: var(--accent);
+    }
+
+    .search-wrapper {
+      max-width: 480px;
+    }
+    .search-wrapper .form-control {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      border-radius: 50px 0 0 50px !important;
+    }
+    .search-wrapper .form-control::placeholder { color: rgba(255,255,255,0.6); }
+    .search-wrapper .form-control:focus {
+      background: rgba(255,255,255,0.22);
+      box-shadow: none;
+      color: #fff;
+    }
+    .search-wrapper .btn {
+      border-radius: 0 50px 50px 0 !important;
+      background: var(--accent);
+      border: none;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .glass-card {
+      background: var(--card-glass);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      color: #fff;
+    }
+
+    .display-temp {
+      font-size: 200px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .weather-icon {
+      font-size: 4.5rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    .stat-box {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-box .stat-icon { font-size: 1.6rem; color: var(--accent); }
+    .stat-box .stat-label { font-size: .75rem; opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-box .stat-value { font-size: 1.25rem; font-weight: 700; }
+
+    .forecast-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      text-align: center;
+      padding: .8rem .5rem;
+      transition: background .2s;
+    }
+    .forecast-card:hover { background: rgba(255,255,255,0.14); }
+    .forecast-card .fc-day { font-size: .78rem; opacity: .7; }
+    .forecast-card .fc-icon { font-size: 1.8rem; margin: .3rem 0; }
+    .forecast-card .fc-temp { font-weight: 700; }
+
+    .hourly-item {
+      min-width: 70px;
+      text-align: center;
+    }
+    .hourly-item .h-hour { font-size: .72rem; opacity: .65; }
+    .hourly-item .h-icon { font-size: 1.4rem; }
+    .hourly-item .h-temp { font-weight: 600; font-size: .9rem; }
+
+    .hourly-scroll::-webkit-scrollbar { display: none; }
+    .hourly-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .city-btn.active-city {
+      background: var(--accent) !important;
+      color: #000 !important;
+    }
+
+    .map-placeholder {
+      background: rgba(255,255,255,0.06);
+      border: 1px dashed var(--card-border);
+      border-radius: 16px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      opacity: .7;
+    }
+  </style>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark px-3 px-md-5 py-3">
+  <a class="navbar-brand fw-bold fs-4" href="/weather?city=Ankara">
+    <i class="bi bi-cloud-sun-fill me-2" style="color:var(--accent)"></i>
+    Hava<span>Durumu</span>
+  </a>
+  <button class="navbar-toggler border-0" type="button"
+          data-bs-toggle="collapse" data-bs-target="#mainNav">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="mainNav">
+    <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+      <li class="nav-item">
+        <a class="nav-link active" href="#"><i class="bi bi-house-fill me-1"></i>AKAR HABER</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container py-4">
+  <form action="/weather" class="d-flex justify-content-center mb-4">
+    <div class="search-wrapper w-100">
+      <div class="input-group">
+        <input type="text" class="form-control py-2 ps-4" placeholder="Şehir ara... (İstanbul, Ankara, İzmir)" id="cityInput" name="city"/>
+        <button type="submit" class="search btn px-4">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="d-flex flex-wrap justify-content-center gap-2 mb-5">
+    <% if (weather) { %>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn active-city" data-city="<%= weather.city %>"><%= weather.city %></button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Istanbul">İstanbul</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Ankara">Ankara</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="İzmir">İzmir</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Antalya">Antalya</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Bursa">Bursa</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Trabzon">Trabzon</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Mersin">Mersin</button>
+    <button class="btn btn-sm btn-outline-light rounded-pill city-btn" data-city="Hatay">Hatay</button>
+    <% } %>
+    <% if (error) { %>
+      <p class="text-danger"><%= error %></p>
+    <% } %>
+  </div>
+
+  <script>
+    document.querySelectorAll('.city-btn').forEach(btn => {
+      btn.addEventListener('click', () =>{
+        const city = btn.getAttribute('data-city');
+        window.location.href = `/weather?city=${city}`;
+      });
+    });
+  </script>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-7 col-lg-8">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <% if (weather) { %>
+              <h2 class="mb-0 fw-bold" style="font-size: 60px;"><%= weather.city %></h2>
+              <p class="mb-0 text-white text-opacity-75">
+                <i class="bi bi-geo-alt-fill me-1"></i>Türkiye
+              </p>
+            <% } %>
+
+            <% if (error) { %>
+              <p class="text-danger"><%= error %></p>
+            <% } %>
+          </div>
+          <div class="text-end">
+            <% if (weather) { %>
+            <p class="mb-0 text-white text-opacity-75"><%= weather.day %>, <%= weather.date %></p>
+            <p class="mb-0 text-white text-opacity-50">Son güncelleme: <%= weather.time %></p>
+            <% } %>
+          </div>
+        </div>
+
+
+        <div class="d-flex align-items-center gap-4 my-4">
+          <% if (weather) { %>
+          <div class="weather-icon"><img src="https://openweathermap.org/img/wn/<%= weather.icon %>@2x.png" alt="icon"></div>
+          <% } %>
+          <% if (error) { %>
+            <p class="text-danger"><%= error %></p>
+          <% } %>
+          <div>
+            <% if (weather) { %>
+              <div class="display-temp"><%= Math.round(weather.temperature) %><sup style="font-size:2.8rem; font-weight:500; opacity:.85">C</sup></div>
+              <p class="mb-0 mt-1" style="font-size:1.1rem"><%= weather.description %></p>
+              <p class="mb-0 text-white text-opacity-60 small">Hissedilen: <%= Math.round(weather.feels_like) %></p>
+            <% } %>
+            <% if (error) { %>
+              <p class="text-danger"><%= error %></p>
+            <% } %>
+          </div>
+        </div>
+
+
+        <div class="d-flex gap-3 mb-2">
+          <% if (weather) { %>
+          <span class="badge rounded-pill px-3 py-2"
+                style="background:rgba(255,100,100,.3)">
+            <i class="bi bi-arrow-up me-1"></i>Maks <%= weather.temp_max %>°C
+          </span>
+          <span class="badge rounded-pill px-3 py-2"
+                style="background:rgba(100,180,255,.3)">
+            <i class="bi bi-arrow-down me-1"></i>Min <%= weather.temp_min %>°C
+          </span>
+          <% } %>
+          <% if (error) { %>
+            <p class="text-danger"><%= error %></p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="col-md-5 col-lg-4" id="detaylar">
+      <div class="glass-card p-4 h-100">
+        <h6 class="text-white text-opacity-60 text-uppercase mb-3" style="letter-spacing:.08em">
+          Hava Detayları
+        </h6>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-droplet-fill"></i></div>
+              <div class="stat-label">Nem</div>
+              <div class="stat-value"><%= weather.humidity %>%</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-wind"></i></div>
+              <div class="stat-label">Rüzgar</div>
+              <div class="stat-value"><%= weather.wind %> km/s</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-eye-fill"></i></div>
+              <div class="stat-label">Görüş</div>
+              <div class="stat-value"><%= weather.visibility %> km</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-speedometer2"></i></div>
+              <div class="stat-label">Basınç</div>
+              <div class="stat-value"><%= weather.pressure %> hPa</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-sunrise"></i></div>
+              <div class="stat-label">Gün Doğumu</div>
+              <div class="stat-value"><%= weather.sunrise %></div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="stat-icon"><i class="bi bi-sunset"></i></div>
+              <div class="stat-label">Gün Batımı</div>
+              <div class="stat-value"><%= weather.sunset %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="glass-card p-4 mb-4">
+    <h6 class="text-white text-opacity-60 text-uppercase mb-3" style="letter-spacing:.08em">
+      <i class="bi bi-clock me-2"></i>Saatlik Tahmin
+    </h6>
+    <div class="d-flex gap-3 overflow-auto hourly-scroll pb-2">
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour">Şimdi</div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= weather.icon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(weather.temperature) %>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.firstTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.firstIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.firstTemp)%>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+      <div class="h-hour"><%= daily.secTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.secIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.secondTemp)%>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.thirdTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.thirdIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.thirdTemp)%>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.fourthTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.fourthIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.fourthTemp)%>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.fifthTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.fifthIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.fifthTemp) %>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.sixthTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.sixthIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.sixthTemp) %>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.seventhTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.seventhIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.seventhTemp)%>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.eighthTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.eighthIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.eighthTemp) %>°</div>
+      </div>
+      <div class="hourly-item flex-shrink-0">
+        <div class="h-hour"><%= daily.ninthTime%></div>
+        <div class="h-icon"><img src="https://openweathermap.org/img/wn/<%= daily.ninthIcon %>@2x.png" alt="icon"></div>
+        <div class="h-temp"><%= Math.round(daily.ninthTemp)%>°</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="glass-card p-4 mb-4" id="tahmin">
+  <h6 class="text-white text-opacity-60 text-uppercase mb-3" style="letter-spacing:.08em">
+    <i class="bi bi-calendar3 me-2"></i>5 Günlük Tahmin
+  </h6>
+
+  <div class="row g-3">
+    <% daily15.forEach((item, index) => { %>
+      <div class="col">
+        <div class="forecast-card">
+          <div class="fc-day">
+            <%= index === 0 ? "Bugün" : item.day %>
+          </div>
+          <div class="fc-icon">
+            <img src="https://openweathermap.org/img/wn/<%= item.icon %>@2x.png">
+          </div>
+          <div class="fc-time">
+            <%= item.time %>
+          </div>
+          <div class="fc-temp">
+            <%= item.temp %>°
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+
+  <div class="glass-card p-4 mb-4">
+    <h6 class="text-white text-opacity-60 text-uppercase mb-3" style="letter-spacing:.08em">
+      <i class="bi bi-sun me-2"></i>Gün İçi Sıcaklık Dağılımı
+    </h6>
+    <div class="mb-3">
+      <div class="d-flex justify-content-between small mb-1">
+        <span>06:00 — Gece (10°C)</span>
+        <span>12:00 — Öğle (21°C)</span>
+        <span>00:00 — Gece (11°C)</span>
+      </div>
+      <div class="progress rounded-pill" style="height:12px; background:rgba(255,255,255,.1)">
+        <div class="progress-bar" role="progressbar" style="width:30%; background:#1a6fa8"
+             data-bs-toggle="tooltip" title="Sabah: 10-14°C"></div>
+        <div class="progress-bar" role="progressbar" style="width:40%; background:#ffd166"
+             data-bs-toggle="tooltip" title="Öğle: 18-21°C"></div>
+        <div class="progress-bar" role="progressbar" style="width:30%; background:#1a6fa8"
+             data-bs-toggle="tooltip" title="Akşam: 11-15°C"></div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-sunrise-fill fs-3" style="color:#ffd166"></i>
+        <div>
+          <div class="small text-white text-opacity-60">Gün Doğumu</div>
+          <div class="fw-bold">06:22</div>
+        </div>
+      </div>
+      <div class="vr opacity-25"></div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-sunset-fill fs-3" style="color:#ff9a3c"></i>
+        <div>
+          <div class="small text-white text-opacity-60">Gün Batımı</div>
+          <div class="fw-bold">19:08</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+<footer class="text-center py-4 text-white text-opacity-40 small">
+  <p class="mb-0">
+    © 2026 HavaDurumu · Bootstrap 5 Öğrenme Projesi ·
+    <a href="#" class="text-white text-opacity-60">Gizlilik</a>
+  </p>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+  });
+
+  document.querySelectorAll('.city-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.city-btn').forEach(b => b.classList.remove('active-city'));
+      this.classList.add('active-city');
+    });
+  });
+</script>
+
+</body>
+</html>
